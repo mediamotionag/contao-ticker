@@ -15,8 +15,8 @@
         "source": "https://github.com/do-while/contao-ticker"
     },
     "require": {
-        "php": ">=5.6.0",
-        "contao/core-bundle": "~4.4"
+        "php": "^8.2",
+        "contao/core-bundle": "^5.3"
     },
     "autoload": {
         "psr-4": {
