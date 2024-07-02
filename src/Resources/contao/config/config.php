@@ -24,7 +24,7 @@ $GLOBALS['BE_MOD']['content']['ticker'] = array
  * FRONT END MODULES
  * -------------------------------------------------------------------------
  */
-array_insert($GLOBALS['FE_MOD']['miscellaneous'], 0, array
+\Contao\ArrayUtil::arrayInsert($GLOBALS['FE_MOD']['miscellaneous'], 0, array
 (
 	'ticker' => 'Softleister\Ticker\ModuleTicker')
 );

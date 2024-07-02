@@ -8,7 +8,7 @@
  * @see	       https://github.com/do-while/contao-ticker
  *
  */
-
+use \Contao\DC_Table;
 /**
  * Table tl_ticker_category 
  */
@@ -18,7 +18,7 @@ $GLOBALS['TL_DCA']['tl_ticker_category'] = array
     // Config
     'config' => array
     (
-        'dataContainer'               => 'Table',
+        'dataContainer'               => DC_Table::class,
         'ctable'                      => array('tl_ticker'),
         'switchToEdit'                => true,
         'enableVersioning'            => true,
@@ -81,7 +81,7 @@ $GLOBALS['TL_DCA']['tl_ticker_category'] = array
                 'label'               => &$GLOBALS['TL_LANG']['tl_ticker_category']['delete'],
                 'href'                => 'act=delete',
                 'icon'                => 'delete.gif',
-                'attributes'          => 'onclick="if (!confirm(\'' . $GLOBALS['TL_LANG']['tl_ticker_category']['deleteConfirm'] . '\')) return false; Backend.getScrollOffset();"'
+                'attributes'          => 'onclick="if (!confirm(\'' . ($GLOBALS['TL_LANG']['tl_ticker_category']['deleteConfirm'] ?? null) . '\')) return false; Backend.getScrollOffset();"'
             ),
             'show' => array
             (

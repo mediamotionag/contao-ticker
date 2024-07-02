@@ -11,8 +11,12 @@
 
 namespace Softleister\Ticker;
 
+use \Contao\Module;
+use \Contao\System;
+use \Conao\BackendTemplate;
+use \Contao\StringUtil;
 
-class ModuleTicker extends \Module
+class ModuleTicker extends Module
 {
     protected $strTemplate = 'mod_ticker';
 
@@ -28,8 +32,10 @@ class ModuleTicker extends \Module
      */
     public function generate()
     {
-        if( TL_MODE == 'BE' ) {
-            $objTemplate = new \BackendTemplate('be_wildcard');
+        if (System::getContainer()->get('contao.routing.scope_matcher')
+            ->isBackendRequest(System::getContainer()->get('request_stack')->getCurrentRequest() ?? Request::create(''))
+        )  {
+            $objTemplate = new BackendTemplate('be_wildcard');
             
             $objTemplate->wildcard = '### Ticker ###';
             $objTemplate->title = $this->headline;
@@ -40,7 +46,7 @@ class ModuleTicker extends \Module
             return $objTemplate->parse();
         }
         
-        $this->ticker_categories = deserialize($this->ticker_categories, true);
+        $this->ticker_categories = StringUtil::deserialize($this->ticker_categories, true);
         
         // Return if there are no categories
         if( !is_array($this->ticker_categories) || count($this->ticker_categories) < 1 ) {
@@ -80,10 +86,9 @@ class ModuleTicker extends \Module
                     $arrTicker['pauseOnHover'] = false;
                 }
             }
-            
-            $tickertext = trim( $this->replaceInsertTags( $objTicker->tickertext, false ) );
-            $linktitle  = trim( $this->replaceInsertTags( $objTicker->linktitle, false ) );
-            $url        = $this->replaceInsertTags( $objTicker->url, false );
+            $tickertext = System::getContainer()->get('contao.insert_tag.parser')->replace( $objTicker->tickertext, false );
+            $linktitle  = System::getContainer()->get('contao.insert_tag.parser')->replace( $objTicker->linktitle, false );
+            $url        = System::getContainer()->get('contao.insert_tag.parser')->replace( $objTicker->url, false );
             if( empty( $tickertext ) ) continue;                                    // Eintrag nicht ticken
             
             $content = str_replace( "'", '&#039;', $tickertext );

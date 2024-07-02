@@ -1,5 +1,6 @@
 <?php
 
+use \Contao\Backend;
 /**
  * @copyright  Softleister 2008-2019
  * @author     Softleister <info@softleister.de>

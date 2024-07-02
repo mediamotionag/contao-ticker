@@ -8,7 +8,9 @@
  * @see	       https://github.com/do-while/contao-ticker
  *
  */
-
+use \Contao\DC_Table;
+use \Contao\Backend;
+use \Contao\Input;
 /**
  * Table tl_ticker 
  */
@@ -18,7 +20,7 @@ $GLOBALS['TL_DCA']['tl_ticker'] = array
     // Config
     'config' => array
     (
-        'dataContainer'               => 'Table',
+        'dataContainer'               => DC_Table::class,
         'ptable'                      => 'tl_ticker_category',
         'enableVersioning'            => true,
         'sql' => array
@@ -78,21 +80,15 @@ $GLOBALS['TL_DCA']['tl_ticker'] = array
                 'label'               => &$GLOBALS['TL_LANG']['tl_ticker']['delete'],
                 'href'                => 'act=delete',
                 'icon'                => 'delete.gif',
-                'attributes'          => 'onclick="if (!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\')) return false; Backend.getScrollOffset();"'
+                'attributes'          => 'onclick="if (!confirm(\'' . ($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null) . '\')) return false; Backend.getScrollOffset();"'
             ),
             'toggle' => array
             (
                 'label'               => &$GLOBALS['TL_LANG']['tl_ticker']['toggle'],
                 'icon'                => 'visible.gif',
                 'attributes'          => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                'button_callback'     => array('tl_ticker', 'toggleIcon')
             ),
-            'show' => array
-            (
-                'label'               => &$GLOBALS['TL_LANG']['tl_ticker']['show'],
-                'href'                => 'act=show',
-                'icon'                => 'show.gif'
-            )
+            'show'
         )
     ),
 
@@ -172,8 +168,7 @@ $GLOBALS['TL_DCA']['tl_ticker'] = array
             'exclude'                 => true,
             'search'                  => true,
             'inputType'               => 'text',
-            'eval'                    => array('rgxp'=>'url', 'decodeEntities'=>true, 'tl_class'=>'w50 wizard'),
-            'wizard'                  => array( array('tl_ticker', 'pagePicker') ),
+            'eval'                    => array('rgxp'=>'url', 'decodeEntities'=>true,'dcaPicker'=>true, 'tl_class'=>'w50 wizard'),
             'sql'                     => "varchar(255) NOT NULL default ''"
         ),
         'target' => array
@@ -232,15 +227,6 @@ $GLOBALS['TL_DCA']['tl_ticker'] = array
 class tl_ticker extends Backend
 {
   //-----------------------------------------------------------------
-  //  Konstruktor
-  //-----------------------------------------------------------------
-  public function __construct()
-  {
-    parent::__construct();
-    $this->import('BackendUser', 'User');
-  }
-
-  //-----------------------------------------------------------------
   //  Callback zum Anzeigen der Tickereinträge im Backend
   //
   //  $arrRow - aktueller Datensatz
@@ -260,67 +246,9 @@ class tl_ticker extends Backend
   // @param object
   // @return string
   //-----------------------------------------------------------------
-  public function pagePicker(DataContainer $dc)
+  public function pagePicker(DC_Table $dc)
   {
-      return ' <a href="contao/page.php?do=' . Input::get('do') . '&amp;table=' . $dc->table . '&amp;field=' . $dc->field . '&amp;value=' . str_replace(array('{{link_url::', '}}'), '', $dc->value) . '" title="' . specialchars($GLOBALS['TL_LANG']['MSC']['pagepicker']) . '" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':765,\'title\':\'' . specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])) . '\',\'url\':this.href,\'id\':\'' . $dc->field . '\',\'tag\':\'ctrl_'. $dc->field . ((Input::get('act') == 'editAll') ? '_' . $dc->id : '') . '\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
+      return ' <a href="contao/page.php?do=' . Input::get('do') . '&amp;table=' . $dc->table . '&amp;field=' . $dc->field . '&amp;value=' . str_replace(array('{{link_url::', '}}'), '', $dc->value) . '" title="' . \Contao\StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['pagepicker']) . '" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':765,\'title\':\'' . \Contao\StringUtil::specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])) . '\',\'url\':this.href,\'id\':\'' . $dc->field . '\',\'tag\':\'ctrl_'. $dc->field . ((Input::get('act') == 'editAll') ? '_' . $dc->id : '') . '\',\'self\':this});return false">' . \Contao\Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
   }
 
-  //-----------------------------------------------------------------
-  //    Veröffentlichung umschalten
-  //-----------------------------------------------------------------
-    public function toggleIcon($row, $href, $label, $title, $icon, $attributes)
-    {
-        if( strlen(Input::get('tid')) ) {
-            $this->toggleVisibility( Input::get('tid'), (Input::get('state') == 1) );
-            $this->redirect( $this->getReferer() );
-        }
-
-        // Check permissions AFTER checking the tid, so hacking attempts are logged
-        if( !$this->User->isAdmin && !$this->User->hasAccess('tl_ticker::published', 'alexf') ) {
-            return '';
-        }
-
-        $href .= '&amp;tid='.$row['id'].'&amp;state='.($row['published'] ? '' : 1);
-
-        if( !$row['published'] ) {
-            $icon = 'invisible.gif';
-        }
-        return '<a href="'.$this->addToUrl($href).'" title="'.specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
-    }
-
-  //-----------------------------------------------------------------
-  //    Veröffentlichung umschalten
-  //-----------------------------------------------------------------
-    public function toggleVisibility($intId, $blnVisible)
-    {
-        // Check permissions to publish
-        if( !$this->User->isAdmin && !$this->User->hasAccess('tl_ticker::published', 'alexf') ) {
-            $this->log('Not enough permissions to publish/unpublish Ticker ID "'.$intId.'"', __METHOD__, TL_ERROR);
-            $this->redirect('contao/main.php?act=error');
-        }
-
-        $objVersions = new Versions('tl_ticker', $intId);
-        $objVersions->initialize();
-
-        // Trigger the save_callback
-        if( is_array($GLOBALS['TL_DCA']['tl_ticker']['fields']['published']['save_callback']) ) {
-            foreach( $GLOBALS['TL_DCA']['tl_ticker']['fields']['published']['save_callback'] as $callback ) {
-                if( is_array($callback) ) {
-                    $this->import($callback[0]);
-                    $blnVisible = $this->$callback[0]->$callback[1]($blnVisible, $this);
-                }
-                else if( is_callable($callback) ) {
-                    $blnVisible = $callback($blnVisible, $this);
-                }
-            }
-        }
-
-        // Update the database
-        $this->Database->prepare("UPDATE tl_ticker SET tstamp=". time() .", published='" . ($blnVisible ? 1 : '') . "' WHERE id=?")->execute($intId);
-
-        $objVersions->create();
-        $this->log('A new version of record "tl_ticker.id='.$intId.'" has been created'.$this->getParentEntries('tl_ticker', $intId), __METHOD__, TL_GENERAL);
-    }
-
-  //-----------------------------------------------------------------
 }

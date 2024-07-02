@@ -11,7 +11,10 @@
 
 namespace Softleister\Ticker;
 
-class tickerHookControl extends \Frontend
+use \Contao\Frontend;
+use \Contao\Date;
+
+class tickerHookControl extends Frontend
 {
     /**
      * Zusätzliche InsertTags für Tickermodul
@@ -26,7 +29,7 @@ class tickerHookControl extends \Frontend
      */
     public function tickerInsertTags( $strTag )
     {
-        $this->Date = new \Date(date('Ymd'),'Ymd');
+        $this->Date = new Date(date('Ymd'),'Ymd');
         $heute = $this->Date->dayBegin;                 // Tagesbeginn HEUTE
         $time = time();
 
